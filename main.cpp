@@ -17,9 +17,9 @@ int main(int argc, char* argv[]){
 
 void gerarManPagesDat(int argc, char* argv[]){
     FILE *manPagesDat;
-    manPagesDat = fopen("manpages.dat","w");
+    manPagesDat = fopen("..\\manpages.dat","w");
     
-    for(int i;i<argc;++i){
+    for(int i=1;i<argc;++i){
         FILE *manPageF;
         manPageF = fopen(argv[i],"r");
         
@@ -30,36 +30,31 @@ void gerarManPagesDat(int argc, char* argv[]){
         strcpy(comando,argv[i]);
         
         char conteudo[conteudoTamMax];
-        for(int i=0; i<conteudoTamMax; ++i){
+        for(int a=0; a<conteudoTamMax; ++i){
             conteudo[i] = ' ';
         }
-        while(!feof(manPageF)){
-            conteudo[i] = fgetc(manPageF);
+        int aa;
+        for(aa=0;!feof(manPageF);++aa){
+            //printf("AAA");
+            conteudo[aa] = fgetc(manPageF);
         }
-        conteudo[conteudoTamMax] = '\0';
+        conteudo[aa-1] = '\0';
         
         bool charFinal = false;
-        for(int i=0;i<comandoTamMax;++i){//Escreve o comando
+        for(int a=0;a<comandoTamMax;++a){//Escreve o comando
             if(charFinal)
                 fputc(' ',manPagesDat);
             else{
-                if(comando[i] == '\0'){
+                if(comando[a] == '\0'){
                     charFinal = true;
                     fputc(' ',manPagesDat);
                 }else
-                    fputc(comando[i],manPagesDat);
+                    fputc(comando[a],manPagesDat);
             }
         }
-        for(int i=0;i<conteudoTamMax;++i){//Escreve o conteúdo
-            if(charFinal)
-                fputc(' ',manPagesDat);
-            else{
-                if(comando[i] == '\0'){
-                    charFinal = true;
-                    fputc(' ',manPagesDat);
-                }else
-                    fputc(conteudo[i],manPagesDat);
-            }
+        charFinal = false;
+        for(int a=0;a<conteudoTamMax;++a){//Escreve o conteúdo
+            fputc(conteudo[a],manPagesDat);
         }
     }
     
