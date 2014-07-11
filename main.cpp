@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <cstring>
-#include <iostream>
 using namespace std;
 #include "AvlTree.h"
 
@@ -41,13 +40,7 @@ static const int comandoTamMax = 100;
 static const int conteudoTamMax = 149900;
 
 int main(int argc, char* argv[]){
-    printf("Começou");
-    char* rgv[5];
-    for(int i=0;i<5;++i){
-        strcpy(rgv[i],"locale.5.txt");
-    }
-    printf("Terminou");
-    gerarManPagesDat(argc,rgv);
+    gerarManPagesDat(argc,argv);
 }
 
 void gerarManPagesDat(int argc, char* argv[]){
@@ -68,7 +61,7 @@ void gerarManPagesDat(int argc, char* argv[]){
         manPageF = fopen(argv[i],"r");
         if (manPageF == NULL) perror ("Erro abrindo arquivo");
         
-        printf("Abriu %s",argv[1]);
+        printf("%d - Abriu %s\n",i,argv[i]);
         
         //Gera o nome do comando a partir da entrada de argv[i]], tirando a extensão .txt, e coloca em "comando"
         char comando[comandoTamMax];
@@ -121,6 +114,7 @@ void gerarManPagesDat(int argc, char* argv[]){
     }
     //fecha manPagesDat
     fclose(manPagesDat);
+    
     ///////////////////////////////////
     ///// TERMINOU A MANPAGES.DAT
     ///////////////////////////////////
