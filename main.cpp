@@ -7,7 +7,7 @@ using namespace std;
 void gerarManPagesDat(int argc, char* argv[]);
 
 static const int comandoTamMax = 100;
-static const int conteudoTamMax = 140000;
+static const int conteudoTamMax = 149900;
 
 int main(int argc, char* argv[]){
     
@@ -30,15 +30,19 @@ void gerarManPagesDat(int argc, char* argv[]){
         strcpy(comando,argv[i]);
         
         char conteudo[conteudoTamMax];
-        for(int a=0; a<conteudoTamMax; ++i){
-            conteudo[i] = ' ';
+        for(int a=0; a<conteudoTamMax; ++a){
+            conteudo[a] = ' ';
         }
         int aa;
+        int linhas = 0;
         for(aa=0;!feof(manPageF);++aa){
             //printf("AAA");
             conteudo[aa] = fgetc(manPageF);
+            if(conteudo[aa] == '\n') ++linhas;
         }
         conteudo[aa-1] = '\0';
+        
+        fclose(manPageF);
         
         bool charFinal = false;
         for(int a=0;a<comandoTamMax;++a){//Escreve o comando
@@ -53,7 +57,7 @@ void gerarManPagesDat(int argc, char* argv[]){
             }
         }
         charFinal = false;
-        for(int a=0;a<conteudoTamMax;++a){//Escreve o conteúdo
+        for(int a=0;a<conteudoTamMax-linhas;++a){//Escreve o conteúdo
             fputc(conteudo[a],manPagesDat);
         }
     }
