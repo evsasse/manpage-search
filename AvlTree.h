@@ -111,7 +111,7 @@ public:
     int getMaxSizeByHeight() const{
         int h = root->getHeight();
         h += 1;
-        return (pow(2,h))-1;
+        return getMaxSizeByHeight(h);
     }
     
     T* getByLevel(){ // return T[]
@@ -120,9 +120,9 @@ public:
         Node* arrayN[maxSize];
         //add the nodes by level
         arrayN[0] = root;
-        int aaa = 0;
-        //segfault nesse laço
-        for(int i=0;2*i<maxSize;++i){
+        aaa=0;
+        int maxSizeFor = getMaxSizeByHeight(root->getHeight());
+        for(int i=0;i<maxSizeFor;++i){
             aaa = (2*(i+1))-1;
             arrayN[aaa] = arrayN[i]->left;
             aaa++;
@@ -132,13 +132,19 @@ public:
         T* arrayT = new T[maxSize];
         //add the data from the nodes to arrayT
         for(int i=0;i<maxSize;++i){
-            arrayT[i] = arrayN[i]->data;
+            if(arrayN[i] == 0) arrayT[i] = *(new T());
+            else arrayT[i] = arrayN[i]->data;
         }
         return arrayT;
     }
 private:
     Node* root;
     int size;
+    int aaa;
+    
+    int getMaxSizeByHeight(int h) const{
+        return (pow(2,h))-1;
+    }
 
     Node* insert(const T& t, Node* root) {
         if (root == 0) {

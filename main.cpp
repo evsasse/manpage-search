@@ -2,7 +2,6 @@
 #include <cstring>
 #include <iostream>
 using namespace std;
-#include "ManPage.h"
 #include "AvlTree.h"
 
 
@@ -10,6 +9,17 @@ struct Indice{
     char comando[100];
     int posicao;
     //Define os operadores para poder usar na AvlTree
+    Indice(){
+        for(int i=0;i<100;++i){
+            comando[i] = ' ';
+        }
+        posicao = 0;
+    }
+    bool operator==(const Indice& rhs) const
+    {
+        if (strcmp(comando,rhs.comando) == 0) return true;
+        return false;
+    }
     bool operator<(const Indice& rhs) const
     {
         if (strcmp(comando,rhs.comando) < 0) return true;
@@ -31,41 +41,34 @@ static const int comandoTamMax = 100;
 static const int conteudoTamMax = 149900;
 
 int main(int argc, char* argv[]){
-    
-    AvlTree<char> a;
-    a.insert('a');
-    a.insert('b');
-    a.insert('c');
-    a.insert('d');
-    a.insert('e');
-    a.insert('f');
-    a.insert('g');
-    a.insert('h');
-    cout << a.toString();
-    int maxSize = a.getMaxSizeByHeight();
-    char* b;
-    b = a.getByLevel();
-    for(int i=0; i<maxSize;++i){
-        cout << '\n';
-        cout << b[i];
+    printf("Começou");
+    char* rgv[5];
+    for(int i=0;i<5;++i){
+        strcpy(rgv[i],"locale.5.txt");
     }
-    
-    //gerarManPagesDat(argc,argv);
+    printf("Terminou");
+    gerarManPagesDat(argc,rgv);
 }
 
 void gerarManPagesDat(int argc, char* argv[]){
     //Fazendo a árvore em memória para não demorar tanto a geração...
     AvlTree<Indice> indices;
     
+    ///////////////////////////////////
+    ///// COMEÇA A MANPAGES.DAT
+    ///////////////////////////////////
     //Abre para sobrescrever ou cria o arquivo manpages.dat
     FILE *manPagesDat;
     manPagesDat = fopen("..\\manpages.dat","w");
+    printf("Abriu manpages.dat");
     
     for(int i=1;i<argc;++i){
         //Abre para ler o arquivo de cada manpage
         FILE *manPageF;
         manPageF = fopen(argv[i],"r");
         if (manPageF == NULL) perror ("Erro abrindo arquivo");
+        
+        printf("Abriu %s",argv[1]);
         
         //Gera o nome do comando a partir da entrada de argv[i]], tirando a extensão .txt, e coloca em "comando"
         char comando[comandoTamMax];
@@ -106,21 +109,61 @@ void gerarManPagesDat(int argc, char* argv[]){
         for(int a=0;a<conteudoTamMax-linhas;++a){
             fputc(conteudo[a],manPagesDat);
         }
-        //Finalizou a escrita em manPagesDat
         
         //Adiciona o arquivo e seu indice na árvore de indice principal
         //"i-1" corresponde a posição que foi salvo o registro do comando em manpages.dat
         Indice manPage;
-        *manPage.comando = *comando;
+        //printf("%s\n",comando);
+        strcpy(manPage.comando,comando);
+        //printf("%s\n",manPage.comando);
         manPage.posicao = i-1;
         indices.insert(manPage);
     }
+    //fecha manPagesDat
+    fclose(manPagesDat);
+    ///////////////////////////////////
+    ///// TERMINOU A MANPAGES.DAT
+    ///////////////////////////////////
+    ///// COMEÇA A INDICES.DAT
+    ///////////////////////////////////
     
     //A arvore "indices" deve conter todos os indices ordenados em forma de árvore para serem salvos em disco
     //Ela é retornada em ordem de nível para ser escrita nessa ordem
-    //tree.root->height
-    Indice indicesOrdenados[indices.getMaxSizeByHeight()];
-    //indices.getByLevel(indicesOrdenados);
+    int maxSize = indices.getMaxSizeByHeight();
+    Indice* indicesOrdenados;
+    indicesOrdenados = indices.getByLevel();
     
-    fclose(manPagesDat);
+    //Abre ou cria o arquivo indices.dat para escrita
+    FILE* indicesDat;
+    indicesDat = fopen("..\\indices.dat","w");
+    
+    //percorre cada indice da lista
+    for(int i=0;i<maxSize;++i){
+        //coloca os valores que serão passado para o arquivo em "comando"
+        char comando[100];
+        //strcpy(comando,indicesOrdenados[i].comando);
+        for(int c=0;c<comandoTamMax;++c){
+            comando[c] = indicesOrdenados[i].comando[c];
+        }
+        //printf("%s\n",indicesOrdenados[i].comando);
+        //printf("%s\n",comando);
+        //e em "posicao"
+        int posicao = indicesOrdenados[i].posicao;
+        //troca os 4 ultimos bytes de comando, guardando a posição.
+        //*((int*)&a[96]) = 123;
+        *((int*)&comando[96]) = posicao;
+        //printf("%s\n",comando);
+        
+        for(int i=0;i<comandoTamMax;++i){
+            fputc(comando[i],indicesDat);
+        }
+    }
+    delete indicesOrdenados;
+    
+    //fecha o arquivo indices.dat
+    fclose(indicesDat);
+    
+    ///////////////////////////////////
+    ///// TERMINOU A INDICES.DAT
+    ///////////////////////////////////
 }
