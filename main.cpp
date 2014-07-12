@@ -52,7 +52,7 @@ void gerarManPagesDat(int argc, char* argv[]){
     ///////////////////////////////////
     //Abre para sobrescrever ou cria o arquivo manpages.dat
     FILE *manPagesDat;
-    manPagesDat = fopen("..\\manpages.dat","w");
+    manPagesDat = fopen("..\\manpages.dat","wb");
     printf("Abriu manpages.dat");
     
     for(int i=1;i<argc;++i){
@@ -78,7 +78,7 @@ void gerarManPagesDat(int argc, char* argv[]){
         for(aa=0;!feof(manPageF);++aa){
             //printf("AAA");
             conteudo[aa] = fgetc(manPageF);
-            if(conteudo[aa] == '\n') ++linhas;
+            //if(conteudo[aa] == '\n') ++linhas;
         }
         conteudo[aa-1] = '\0';
         //Fecha o arquivo que estava lendo
@@ -129,7 +129,7 @@ void gerarManPagesDat(int argc, char* argv[]){
     
     //Abre ou cria o arquivo indices.dat para escrita
     FILE* indicesDat;
-    indicesDat = fopen("..\\indices.dat","w");
+    indicesDat = fopen("..\\indices.dat","wb");
     
     //percorre cada indice da lista
     for(int i=0;i<maxSize;++i){
