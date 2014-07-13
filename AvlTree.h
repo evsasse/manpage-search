@@ -122,19 +122,29 @@ public:
         arrayN[0] = root;
         aaa=0;
         int maxSizeFor = getMaxSizeByHeight(root->getHeight());
+//////////////////////////////////////////////
         for(int i=0;i<maxSizeFor;++i){
-            aaa = (2*(i+1))-1;
-            arrayN[aaa] = arrayN[i]->left;
-            aaa++;
-            arrayN[aaa] = arrayN[i]->right;
+            if(arrayN[i] != 0){
+                aaa = (2*(i+1))-1;
+                arrayN[aaa] = arrayN[i]->left;
+                aaa++;
+                arrayN[aaa] = arrayN[i]->right;
+            }else{
+                aaa = (2*(i+1))-1;
+                arrayN[aaa] = 0;
+                aaa++;
+                arrayN[aaa] = 0;
+            }
         }
-        
+//////////////////////////////////////////////
         T* arrayT = new T[maxSize];
         //add the data from the nodes to arrayT
         for(int i=0;i<maxSize;++i){
+            printf(" %d|%p",i,arrayN[i]);
             if(arrayN[i] == 0) arrayT[i] = *(new T());
             else arrayT[i] = arrayN[i]->data;
         }
+        printf("HERP");
         return arrayT;
     }
 private:

@@ -139,6 +139,7 @@ void gerarArquivosDat(int argc, char* argv[]){
     int maxSize = indices.getMaxSizeByHeight();
     Indice* indicesOrdenados;
     indicesOrdenados = indices.getByLevel();
+    printf("Organizou por nivel");
     
     //Abre ou cria o arquivo indices.dat para escrita
     FILE* indicesDat;
@@ -239,6 +240,7 @@ void buscaConteudoPorComando(){
         //print a posição que será iniciada a leitura
         //printf("%d\n",ftell(manPagesDat));
         
+        //print o conteudo até encontrar um caractere nulo, que deve ser o último
         char lido = ' ';
         while(lido != '\0'){
             printf("%c",lido=fgetc(manPagesDat));
