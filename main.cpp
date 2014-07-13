@@ -36,6 +36,7 @@ struct Indice{
 
 
 void gerarArquivosDat(int argc, char* argv[]);
+void buscaConteudoPorComando();
 
 static const int comandoTamMax = 100;
 static const int conteudoTamMax = 149900;
@@ -53,7 +54,7 @@ int main(int argc, char* argv[]){
         scanf("%d",&entrada);
         switch(entrada){
             case 1: gerarArquivosDat(argc,argv); break;
-            case 2: break;
+            case 2: buscaConteudoPorComando(); break;
             case 3: break;
             case 4: break;
         }
@@ -92,9 +93,7 @@ void gerarArquivosDat(int argc, char* argv[]){
         }
         int aa;
         for(aa=0;!feof(manPageF);++aa){
-            //printf("AAA");
             conteudo[aa] = fgetc(manPageF);
-            //if(conteudo[aa] == '\n') ++linhas;
         }
         conteudo[aa-1] = '\0';
         //Fecha o arquivo que estava lendo
@@ -121,9 +120,7 @@ void gerarArquivosDat(int argc, char* argv[]){
         //Adiciona o arquivo e seu indice na árvore de indice principal
         //"i-1" corresponde a posição que foi salvo o registro do comando em manpages.dat
         Indice manPage;
-        //printf("%s\n",comando);
         strcpy(manPage.comando,comando);
-        //printf("%s\n",manPage.comando);
         manPage.posicao = i-1;
         indices.insert(manPage);
     }
@@ -176,4 +173,70 @@ void gerarArquivosDat(int argc, char* argv[]){
     ///////////////////////////////////
     ///// TERMINOU A INDICES.DAT
     ///////////////////////////////////
+}
+
+void buscaConteudoPorComando(){
+    //inicializa array onde será salvo o comando a ser pesquisado
+    char comandoBusca[100];
+    for(int i=0;i<comandoTamMax;++i){
+        comandoBusca[i] = ' ';
+    }
+    //pede o comando ao usuário
+    scanf("%s",comandoBusca);
+    
+    //abre o arquivo indices.dat
+    FILE* indicesDat;
+    indicesDat = fopen("..\\indices.dat","rb");
+    
+    //calcula a quantidade de itens na arvore e salva em "tamanho"
+    fseek(indicesDat, 0, SEEK_END);
+    int tamanho = ftell(indicesDat);
+    fseek(indicesDat, 0, SEEK_SET);
+    tamanho /= comandoTamMax; 
+    //printf("%d \n", tamanho);
+    
+    //percorrimento da árvore em arquivo, buscando pelo item pedido
+    int pos = 0;
+    bool achou = false;
+    char comandoAtual[100];
+    while(!achou && pos<tamanho){
+        //Posiciona o leitor no começo do registro
+        fseek(indicesDat,pos*comandoTamMax,SEEK_SET);
+        char comandoAtual[100];
+        //lê o registro do arquivo
+        fgets(comandoAtual,100,indicesDat);
+        //compara com o procurado, a comparação para no caracter nulo '\0'
+        //sem se importar com os bytes finais que são a posição
+        int cmp = strcmp(comandoBusca,comandoAtual);
+        printf("%s - %s -> %d\n",comandoBusca,comandoAtual,cmp);
+        if(cmp < 0){//buscado maior que encontrado, pega o ramo da esquerda
+            pos++;
+            pos = (2*pos)-1;
+        }else if(cmp > 0){//buscado menor que encontrado, pega o ramo da direita
+            pos++;
+            pos = (2*pos);
+        }else{//encontrou!!!
+            //printf("%s\n%s\n%d\n",comandoBusca,comandoAtual,cmp);
+            achou = true;
+        }
+    }
+    
+    if(achou){
+        //retira a posicao dos ultimos 4 bytes de comando
+        int* posicao = new int;
+        //*pos = *((int*)&a[96]);
+        *posicao = *((int*)&comandoAtual[96]);
+        printf("%d",*posicao);
+        
+        
+        ///////////////
+        // ABRIR MANPAGES.DAT E PEGAR CONTEUDO A SER EXIBIDO!!!
+        
+        
+    }else{
+        printf("\nManPage nao encontrada!\n");
+    }
+    
+    
+    fclose(indicesDat);
 }
