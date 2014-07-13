@@ -193,7 +193,6 @@ void buscaConteudoPorComando(){
     int tamanho = ftell(indicesDat);
     fseek(indicesDat, 0, SEEK_SET);
     tamanho /= comandoTamMax; 
-    //printf("%d \n", tamanho);
     
     //percorrimento da árvore em arquivo, buscando pelo item pedido
     int pos = 0;
@@ -208,7 +207,8 @@ void buscaConteudoPorComando(){
         //compara com o procurado, a comparação para no caracter nulo '\0'
         //sem se importar com os bytes finais que são a posição
         int cmp = strcmp(comandoBusca,comandoAtual);
-        printf("%s - %s -> %d\n",comandoBusca,comandoAtual,cmp);
+        //print percorrimento da arvore
+        //printf("%s - %s -> %d\n",comandoBusca,comandoAtual,cmp);
         if(cmp < 0){//buscado maior que encontrado, pega o ramo da esquerda
             pos++;
             pos = (2*pos)-1;
@@ -216,27 +216,37 @@ void buscaConteudoPorComando(){
             pos++;
             pos = (2*pos);
         }else{//encontrou!!!
-            //printf("%s\n%s\n%d\n",comandoBusca,comandoAtual,cmp);
             achou = true;
         }
     }
+    //fecha indices.dat, mas deixa salvo o conteúdo pedido em "comandoAtual"
+    fclose(indicesDat);
     
     if(achou){
         //retira a posicao dos ultimos 4 bytes de comando
-        int* posicao = new int;
+        int posicao;
         //*pos = *((int*)&a[96]);
-        *posicao = *((int*)&comandoAtual[96]);
-        printf("%d",*posicao);
+        posicao = *((int*)&comandoAtual[96]);
         
+        //Abre manpages.dat, para pegar o conteudo pedido
+        FILE* manPagesDat;
+        manPagesDat = fopen("..\\manpages.dat","rb");
+        //posiciona o leitor no começo do registro
+        posicao *= comandoTamMax+conteudoTamMax;
+        fseek(manPagesDat,posicao,SEEK_SET);
+        //posiciona o leitor no começo do conteudo do registro
+        fseek(manPagesDat,comandoTamMax,SEEK_CUR);
+        //print a posição que será iniciada a leitura
+        //printf("%d\n",ftell(manPagesDat));
         
-        ///////////////
-        // ABRIR MANPAGES.DAT E PEGAR CONTEUDO A SER EXIBIDO!!!
+        char lido = ' ';
+        while(lido != '\0'){
+            printf("%c",lido=fgetc(manPagesDat));
+        }
         
-        
+        //Fecha manpages.dat
+        fclose(manPagesDat);
     }else{
         printf("\nManPage nao encontrada!\n");
     }
-    
-    
-    fclose(indicesDat);
 }
