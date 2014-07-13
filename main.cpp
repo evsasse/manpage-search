@@ -9,7 +9,8 @@ struct Indice{
     int posicao;
     //Define os operadores para poder usar na AvlTree
     Indice(){
-        for(int i=0;i<100;++i){
+        comando[0] = '\0';
+        for(int i=1;i<100;++i){
             comando[i] = ' ';
         }
         posicao = 0;
@@ -34,16 +35,32 @@ struct Indice{
 
 
 
-void gerarManPagesDat(int argc, char* argv[]);
+void gerarArquivosDat(int argc, char* argv[]);
 
 static const int comandoTamMax = 100;
 static const int conteudoTamMax = 149900;
 
 int main(int argc, char* argv[]){
-    gerarManPagesDat(argc,argv);
+    int entrada;
+    do{
+        printf("\n");
+        printf("(1) - Gerar arquivos .dat\n");
+        printf("(2) - Buscar conteudo pelo nome da manpage\n");
+        printf("(3) - Buscar manpages por uma palavra\n");
+        printf("(4) - Buscar manpages por duas palavras\n");
+        printf("\n");
+        printf("(0) - Sair\n");
+        scanf("%d",&entrada);
+        switch(entrada){
+            case 1: gerarArquivosDat(argc,argv); break;
+            case 2: break;
+            case 3: break;
+            case 4: break;
+        }
+    }while(entrada != 0);
 }
 
-void gerarManPagesDat(int argc, char* argv[]){
+void gerarArquivosDat(int argc, char* argv[]){
     //Fazendo a árvore em memória para não demorar tanto a geração...
     AvlTree<Indice> indices;
     
@@ -53,7 +70,7 @@ void gerarManPagesDat(int argc, char* argv[]){
     //Abre para sobrescrever ou cria o arquivo manpages.dat
     FILE *manPagesDat;
     manPagesDat = fopen("..\\manpages.dat","wb");
-    printf("Abriu manpages.dat");
+    printf("Comecou a gerar manpages.dat\n");
     
     for(int i=1;i<argc;++i){
         //Abre para ler o arquivo de cada manpage
@@ -74,7 +91,6 @@ void gerarManPagesDat(int argc, char* argv[]){
             conteudo[a] = ' ';
         }
         int aa;
-        int linhas = 0;
         for(aa=0;!feof(manPageF);++aa){
             //printf("AAA");
             conteudo[aa] = fgetc(manPageF);
@@ -98,8 +114,7 @@ void gerarManPagesDat(int argc, char* argv[]){
             }
         }
         //Escreve o conteúdo em manpages.dat
-        //Diminui a quantidade de linhas pois os \n contam como 2 caracteres, então 2 bytes, "pula a linha, e retorno do carro"
-        for(int a=0;a<conteudoTamMax-linhas;++a){
+        for(int a=0;a<conteudoTamMax;++a){
             fputc(conteudo[a],manPagesDat);
         }
         
@@ -114,6 +129,7 @@ void gerarManPagesDat(int argc, char* argv[]){
     }
     //fecha manPagesDat
     fclose(manPagesDat);
+    printf("Terminou de gerar manpages.dat\n");
     
     ///////////////////////////////////
     ///// TERMINOU A MANPAGES.DAT
@@ -131,22 +147,21 @@ void gerarManPagesDat(int argc, char* argv[]){
     FILE* indicesDat;
     indicesDat = fopen("..\\indices.dat","wb");
     
+    printf("Comecou a gerar indices.dat\n");
+    
     //percorre cada indice da lista
     for(int i=0;i<maxSize;++i){
         //coloca os valores que serão passado para o arquivo em "comando"
         char comando[100];
-        //strcpy(comando,indicesOrdenados[i].comando);
         for(int c=0;c<comandoTamMax;++c){
             comando[c] = indicesOrdenados[i].comando[c];
         }
-        //printf("%s\n",indicesOrdenados[i].comando);
-        //printf("%s\n",comando);
+        printf("%d - %s\n",(i+1),comando);
         //e em "posicao"
         int posicao = indicesOrdenados[i].posicao;
         //troca os 4 ultimos bytes de comando, guardando a posição.
         //*((int*)&a[96]) = 123;
         *((int*)&comando[96]) = posicao;
-        //printf("%s\n",comando);
         
         for(int i=0;i<comandoTamMax;++i){
             fputc(comando[i],indicesDat);
@@ -156,6 +171,7 @@ void gerarManPagesDat(int argc, char* argv[]){
     
     //fecha o arquivo indices.dat
     fclose(indicesDat);
+    printf("Terminou de gerar indices.dat\n");
     
     ///////////////////////////////////
     ///// TERMINOU A INDICES.DAT
