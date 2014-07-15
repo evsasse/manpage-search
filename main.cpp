@@ -4,36 +4,7 @@
 using namespace std;
 #include "AvlTree.h"
 #include "Palavra.h"
-
-struct Indice{
-    char comando[100];
-    int posicao;
-    //Define os operadores para poder usar na AvlTree
-    Indice(){
-        comando[0] = '\0';
-        for(int i=1;i<100;++i){
-            comando[i] = ' ';
-        }
-        posicao = 0;
-    }
-    bool operator==(const Indice& rhs) const
-    {
-        if (strcmp(comando,rhs.comando) == 0) return true;
-        return false;
-    }
-    bool operator<(const Indice& rhs) const
-    {
-        if (strcmp(comando,rhs.comando) < 0) return true;
-        return false;
-    }
-    
-    bool operator>(const Indice& rhs) const
-    {
-        if (strcmp(comando,rhs.comando) > 0) return true;
-        return false;
-    }
-};
-
+#include "Indice.h"
 
 void gerarArquivosDat(int argc, char* argv[]);
 void buscaConteudoPorComando();
@@ -45,15 +16,21 @@ static const int palavraTamMax = 100;
 static const int comandoTamMax = 100;
 static const int conteudoTamMax = 149900;
 
+static const int qtdConectivos = 25;
 static const char* conectivos[] = {
     "a","the","and","or","if","of","to","into","by","for","on","at","in","next",
     "then","than","more","only","always","never","all","off","with","that",
     "this",""
 };
 
-
+/**
+ * Mostra o menu e espera por uma opção ser escolhida, chamando a função respectiva à opção
+ * 
+ * @param argc
+ * @param argv
+ * @return 
+ */
 int main(int argc, char* argv[]){
-    
     int entrada;
     do{
         printf("\n");
@@ -73,6 +50,22 @@ int main(int argc, char* argv[]){
     }while(entrada != 0);
 }
 
+
+/**
+ * Recebe os argumentos da execução do programa, que devem ter a quantidade de argumentos e o nome dos arquivos a serem processados.
+ * Gera o arquivo "manpages.dat" que contém os nomes dos arquivos originais e seus conteúdos, formatados com um tamanho máximo padrão para facilitar a busca utilizando um índice
+ * Durante a geração de "manpages.dat":
+ *      é criada a árvore de "Indice"s com nome dos arquivos e posição dele em "manpages.dat";
+ *      e a árvore de "Palavra"s com cada palavra que aparece nos arquivos e os índices dos arquivos que as contém.
+ * Gera o "indices.dat" que é a árvore de "Indice"s organizada em níveis, que facilitará a busca
+ * Gera o "palavras.dat" que é árvore de "Palavra"s organizada em níveis.
+ * 
+ * As palavras são obtidas separando o texto original pelos seguintes caracteres: " \n.,|`´^~<>:;_-+=()[]\"'/*!@#"
+ * Os conectivos são retirados utilizando o array de palavras "conectivos"
+ * 
+ * @param argc
+ * @param argv
+ */
 void gerarArquivosDat(int argc, char* argv[]){
     //Fazendo as árvores em memória para não demorar tanto a geração...
     AvlTree<Indice> indices;
@@ -211,16 +204,11 @@ void gerarArquivosDat(int argc, char* argv[]){
     printf("%d|%d\n",palavras.getSize(),palavras.getMaxSizeByHeight());
     
     //Exclui conectivos da árvore
-    for(int i=0;i<25;i++){
+    for(int i=0;i<qtdConectivos;i++){
         char conectivo[100];
         strcpy(conectivo,conectivos[i]);
         palavras.remove(Palavra(conectivo,0));
     }
-    //palavras.remove(Palavra("if",0));
-    
-    //char* conectivoC = "if";
-    //Palavra conectivo(conectivoC,0);
-    //palavras.remove(conectivo);
     
     //Gera palavras ordenadas para inserção
     Palavra* palavrasOrdenadas = palavras.getByLevel();
@@ -269,6 +257,16 @@ void gerarArquivosDat(int argc, char* argv[]){
     ///////////////////////////////////
 }
 
+
+/**
+ * Pede o nome do comando/manpage a ser procurado
+ * Percorre o arquivo "indices.dat" que está organizado como uma árvore por níveis procurando pelo texto informado.
+ * 
+ * O percorrimento por níveis é feito do seguinte modo:
+ *      Estando em uma posição "x" e
+ *          verificando que aquilo que é procurado é menor que atual, vá para o nodo da esquerda, no caso a posição "2(x+1)-1"
+ *          verificando que aquilo que é procurado é maior que atual, vá para o nodo da direita, no caso a posição "2(x+1)"
+ */
 void buscaConteudoPorComando(){
     //inicializa array onde será salvo o comando a ser pesquisado
     char comandoBusca[100];
@@ -350,17 +348,22 @@ void buscaConteudoPorComando(){
     }
 }
 
+/**
+ * Pede uma palavra e pede à posicaoDasManPagesCom(palavra) a lista de índices que possuem a palavra pesquisada
+ * Traduz os índices para o nome das manpages acessando "manpages.dat" e pegando o nome dos registros de índice respectivos.
+ */
 void buscaPorUmaPalavra(){
+    //pede a palavra a ser pesquisada
     char palavra[100];
     scanf("%s",palavra);
-    
+    //pega a lista de indices que possuem a palavra
     deque<int> indices = posicaoDasManPagesCom(palavra);
-
+    //abre "manpages.dat"
     FILE* manpagesDat;
     manpagesDat = fopen("..\\manpages.dat","rb");
     
     printf("\n\n");
-    
+    //pega o nome dos registros a partir dos índices
     while(!indices.empty()){
         fseek(manpagesDat,indices.front()*(comandoTamMax+conteudoTamMax),SEEK_SET);
         char comando[100];
@@ -368,20 +371,25 @@ void buscaPorUmaPalavra(){
         printf("%d - %s\n",indices.front(),comando);
         indices.pop_front();
     }
-    
+    //fecha "manpages.dat"
     fclose(manpagesDat);
     
 }
-
+/**
+ * Pede as duas palavras, e obtem os indices de modo semelhante a buscaPorUmaPalavra
+ * Realiza a intersecção entre as listas de índices
+ * Traduz os índices para o nome das manpages consultando "manpages.dat"
+ */
 void buscaPorDuasPalavras(){
+    //pede a 1ª palavra
     char palavra1[100];
     scanf("%s",palavra1);
-    
+    //pega a lista de índices que possuem a 1ª palavra
     deque<int> indices1 = posicaoDasManPagesCom(palavra1);
-    
+    //pede a 2ª palavra
     char palavra2[100];
     scanf("%s",palavra2);
-    
+    //pega índices da 2ª palavra
     deque<int> indices2 = posicaoDasManPagesCom(palavra2);
     
     //Intersecção de indices1 e indices2
@@ -406,7 +414,6 @@ void buscaPorDuasPalavras(){
     manpagesDat = fopen("..\\manpages.dat","rb");
     
     printf("\n\n");
-    
     while(!indices.empty()){
         fseek(manpagesDat,indices.front()*(comandoTamMax+conteudoTamMax),SEEK_SET);
         char comando[100];
@@ -418,6 +425,15 @@ void buscaPorDuasPalavras(){
     fclose(manpagesDat);
 }
 
+
+/**
+ * Recebe a palavra a ser procurada
+ * Consulta o "palavras.dat", que é uma árvore por níveis, procurando pela palavra pedida
+ * Retorna a lista de índices que possuem a palavra pedida
+ * 
+ * @param palavra
+ * @return 
+ */
 deque<int> posicaoDasManPagesCom(char* palavra){
     FILE* palavrasDat;
     palavrasDat = fopen("..\\palavras.dat","rb");

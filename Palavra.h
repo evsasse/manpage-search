@@ -4,6 +4,10 @@
 #include <deque>
 using std::deque;
 
+
+/**
+ * Struct utilizada para conter as palavras que estão contidas no arquivo
+ */
 struct Palavra{
     char palavra[100];
     deque<int> posicoes;

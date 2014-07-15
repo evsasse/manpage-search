@@ -117,7 +117,11 @@ public:
         h += 1;
         return getMaxSizeByHeight(h);
     }
-
+    
+    /**
+     * Retorna um array dos objetos da árvore organizados por níveis
+     * @return 
+     */
     T* getByLevel() { // return T[]
         //make an array of the nodes
         printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
@@ -232,6 +236,14 @@ private:
     }
 };
 
+/**
+ * Especialização da inserção para a struct Palavra
+ * Ao inserir uma Palavra que já está na árvore, em vez de não fazer nada, adiciona as posições da palavra inserida aquela que já está na árvore
+ * 
+ * @param t
+ * @param root
+ * @return 
+ */
 template<>
 AvlTree<Palavra>::Node* AvlTree<Palavra>::insert(const Palavra& t, Node* root) {
     if (root == 0) {
