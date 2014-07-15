@@ -211,6 +211,11 @@ void gerarArquivosDat(int argc, char* argv[]){
     printf("%d|%d\n",palavras.getSize(),palavras.getMaxSizeByHeight());
     
     //Exclui conectivos da árvore
+    for(int i=0;i<25;i++){
+        char conectivo[100];
+        strcpy(conectivo,conectivos[i]);
+        palavras.remove(Palavra(conectivo,0));
+    }
     //palavras.remove(Palavra("if",0));
     
     //char* conectivoC = "if";
