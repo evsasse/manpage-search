@@ -7,9 +7,12 @@ using std::pow;
 #include <string>
 using std::string;
 
+#include "Palavra.h"
+
 template <typename T>
 class AvlTree {
-    public:
+public:
+
     struct Node {
         Node *left, *right;
         T data;
@@ -18,12 +21,12 @@ class AvlTree {
             if (this == 0) return -1;
             return height;
         }
-        
-        Node():
+
+        Node() :
         left(0),
         right(0),
         data(),
-        height(0){
+        height(0) {
         }
 
         Node(const T& t) :
@@ -84,6 +87,7 @@ class AvlTree {
         }
     };
 public:
+
     AvlTree() :
     root(0) {
     }
@@ -99,61 +103,70 @@ public:
     string toString() {//works for <char>
         return root->toString();
     }
-    
-    int getSize() const{
+
+    int getSize() const {
         return size;
     }
-    
-    int getHeight() const{
+
+    int getHeight() const {
         return root->getHeight();
     }
-    
-    int getMaxSizeByHeight() const{
+
+    int getMaxSizeByHeight() const {
         int h = root->getHeight();
         h += 1;
         return getMaxSizeByHeight(h);
     }
-    
-    T* getByLevel(){ // return T[]
+
+    T* getByLevel() { // return T[]
         //make an array of the nodes
+        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
         int maxSize = getMaxSizeByHeight();
-        Node* arrayN[maxSize];
+        printf("%d", maxSize);
+        //Node * arrayN[maxSize];
+        Node* *arrayN = new Node*[maxSize];
         //add the nodes by level
+        printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n");
         arrayN[0] = root;
-        aaa=0;
+        aaa = 0;
         int maxSizeFor = getMaxSizeByHeight(root->getHeight());
-//////////////////////////////////////////////
-        for(int i=0;i<maxSizeFor;++i){
-            if(arrayN[i] != 0){
-                aaa = (2*(i+1))-1;
+        printf("@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+        //////////////////////////////////////////////
+        for (int i = 0; i < maxSizeFor; ++i) {
+            if (arrayN[i] != 0) {
+                aaa = (2 * (i + 1)) - 1;
                 arrayN[aaa] = arrayN[i]->left;
                 aaa++;
                 arrayN[aaa] = arrayN[i]->right;
-            }else{
-                aaa = (2*(i+1))-1;
+            } else {
+                aaa = (2 * (i + 1)) - 1;
                 arrayN[aaa] = 0;
                 aaa++;
                 arrayN[aaa] = 0;
             }
         }
-//////////////////////////////////////////////
+        //////////////////////////////////////////////
+        printf("###########################\n");
         T* arrayT = new T[maxSize];
         //add the data from the nodes to arrayT
-        for(int i=0;i<maxSize;++i){
-            printf(" %d|%p",i,arrayN[i]);
-            if(arrayN[i] == 0) arrayT[i] = *(new T());
+        for (int i = 0; i < maxSize; ++i) {
+            //printf(" %d|%p",i,arrayN[i]);
+            if (arrayN[i] == 0) arrayT[i] = *(new T());
             else arrayT[i] = arrayN[i]->data;
         }
-        printf("HERP");
+        //printf("HERP");
+        
+        delete [] arrayN;
+        
         return arrayT;
     }
 private:
     Node* root;
     int size;
     int aaa;
-    
-    int getMaxSizeByHeight(int h) const{
-        return (pow(2,h))-1;
+
+    int getMaxSizeByHeight(int h) const {
+        return (pow(2, h)) - 1;
     }
 
     Node* insert(const T& t, Node* root) {
@@ -186,21 +199,21 @@ private:
 
         if (t < root->data) //left
             root->left = remove(t, root->left);
-        else if(t > root->data) //right
+        else if (t > root->data) //right
             root->right = remove(t, root->right);
-        else{//delete root
+        else {//delete root
             --size;
-            if(root->left == 0 && root->right == 0){//no child
+            if (root->left == 0 && root->right == 0) {//no child
                 delete root;
                 return 0;
-            }else if(root->left == 0 || root->right == 0){//one child
-                Node* aux = (root->left ? root->left : root->right); 
+            } else if (root->left == 0 || root->right == 0) {//one child
+                Node* aux = (root->left ? root->left : root->right);
                 delete root;
                 root = aux;
-            }else{//two children
+            } else {//two children
                 Node* aux = root->left->rightMost();
                 root->data = aux->data;
-                root->left = remove(aux->data,root->left);
+                root->left = remove(aux->data, root->left);
                 root->updateHeight();
             }
         }
@@ -218,5 +231,34 @@ private:
         return root;
     }
 };
+
+template<>
+AvlTree<Palavra>::Node* AvlTree<Palavra>::insert(const Palavra& t, Node* root) {
+    if (root == 0) {
+        ++size;
+        return new Node(t);
+    }
+    if (t < root->data) {//left
+        root->left = insert(t, root->left);
+        if (root->left->getHeight() - root->right->getHeight() > 1)
+            if (t < root->left->data)//"/"
+                root = root->rotateRight();
+            else//"<"
+                root = root->doubleRotateRight();
+    } else if (t > root->data) {//right
+        root->right = insert(t, root->right);
+        if (root->right->getHeight() - root->left->getHeight() > 1)
+            if (t > root->right->data) //"\"
+                root = root->rotateLeft();
+            else //">"
+                root = root->doubleRotateLeft();
+    } else {//== 
+        int posicao = t.posicoes.front();
+        if(root->data.posicoes.back() != posicao)
+            root->data.posicoes.push_back(posicao);
+    }
+    root->updateHeight();
+    return root;
+}
 
 #endif	/* AVLTREE_H */

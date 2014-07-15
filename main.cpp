@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <cstring>
+#include <deque>
 using namespace std;
 #include "AvlTree.h"
-
+#include "Palavra.h"
 
 struct Indice{
     char comando[100];
@@ -34,14 +35,25 @@ struct Indice{
 };
 
 
-
 void gerarArquivosDat(int argc, char* argv[]);
 void buscaConteudoPorComando();
+deque<int> posicaoDasManPagesCom(char* palavra);
+void buscaPorUmaPalavra();
+void buscaPorDuasPalavras();
 
+static const int palavraTamMax = 100;
 static const int comandoTamMax = 100;
 static const int conteudoTamMax = 149900;
 
+static const char* conectivos[] = {
+    "a","the","and","or","if","of","to","into","by","for","on","at","in","next",
+    "then","than","more","only","always","never","all","off","with","that",
+    "this",""
+};
+
+
 int main(int argc, char* argv[]){
+    
     int entrada;
     do{
         printf("\n");
@@ -55,15 +67,16 @@ int main(int argc, char* argv[]){
         switch(entrada){
             case 1: gerarArquivosDat(argc,argv); break;
             case 2: buscaConteudoPorComando(); break;
-            case 3: break;
-            case 4: break;
+            case 3: buscaPorUmaPalavra();break;
+            case 4: buscaPorDuasPalavras();break;
         }
     }while(entrada != 0);
 }
 
 void gerarArquivosDat(int argc, char* argv[]){
-    //Fazendo a árvore em memória para não demorar tanto a geração...
+    //Fazendo as árvores em memória para não demorar tanto a geração...
     AvlTree<Indice> indices;
+    AvlTree<Palavra> palavras;
     
     ///////////////////////////////////
     ///// COMEÇA A MANPAGES.DAT
@@ -107,7 +120,8 @@ void gerarArquivosDat(int argc, char* argv[]){
             else{
                 if(comando[a] == '\0'){
                     charFinal = true;
-                    fputc(' ',manPagesDat);
+                    fputc('\0',manPagesDat);
+                    //fputc(' ',manPagesDat);
                 }else
                     fputc(comando[a],manPagesDat);
             }
@@ -116,6 +130,20 @@ void gerarArquivosDat(int argc, char* argv[]){
         for(int a=0;a<conteudoTamMax;++a){
             fputc(conteudo[a],manPagesDat);
         }
+        
+        ///////////////////////////////////////
+        // Montagem da árvore de palavras
+        //char *palavra = strtok(conteudo," ");
+        char *palavra = strtok(conteudo," \n.,|`´^~<>:;_-+=()[]\"'/*!@#");
+        //char *palavra = strtok(conteudo," ,.;:[]{}<>()_-=+\\/?!@#$%&*|\"'`´^~");
+        while(palavra != 0){
+            Palavra atual(palavra,i-1);
+            palavras.insert(atual);
+            //palavra = strtok(0," ");
+            palavra = strtok(0," \n.,|`´^~<>:;_-+=()[]\"'/*!@#");
+            //palavra = strtok(conteudo," ,.;:[]{}<>()_-=+\\/?!@#$%&*|\"'`´^~");
+        }
+        ///////////////////////////////////////
         
         //Adiciona o arquivo e seu indice na árvore de indice principal
         //"i-1" corresponde a posição que foi salvo o registro do comando em manpages.dat
@@ -145,7 +173,7 @@ void gerarArquivosDat(int argc, char* argv[]){
     FILE* indicesDat;
     indicesDat = fopen("..\\indices.dat","wb");
     
-    printf("Comecou a gerar indices.dat\n");
+    printf("Abriu e comecou a gerar indices.dat\n");
     
     //percorre cada indice da lista
     for(int i=0;i<maxSize;++i){
@@ -173,6 +201,66 @@ void gerarArquivosDat(int argc, char* argv[]){
     
     ///////////////////////////////////
     ///// TERMINOU A INDICES.DAT
+    ///////////////////////////////////
+    ///// COMEÇOU O PALAVRAS.DAT
+    ///////////////////////////////////
+    
+    FILE* palavrasDat;
+    palavrasDat = fopen("..\\palavras.dat","wb");
+    printf("Abriu e comecou a gerar palavras.dat\n");
+    printf("%d|%d\n",palavras.getSize(),palavras.getMaxSizeByHeight());
+    
+    //Exclui conectivos da árvore
+    //palavras.remove(Palavra("if",0));
+    
+    //char* conectivoC = "if";
+    //Palavra conectivo(conectivoC,0);
+    //palavras.remove(conectivo);
+    
+    //Gera palavras ordenadas para inserção
+    Palavra* palavrasOrdenadas = palavras.getByLevel();
+    printf("Gerou palavras ordenadas");
+    
+    //Escreve qtd de palavras
+    maxSize = palavras.getMaxSizeByHeight();
+    char maxSizeW[4];
+    *((int*)&maxSizeW[0]) = maxSize;
+    for(int i=0;i<4;++i){
+        fputc(maxSizeW[i],palavrasDat);
+    }
+    //Escreve palavras seguidas do inicio de local das posicoes,e a qtd de posicoes
+    //"wait                         0 4"
+    int posicao = 0;
+    for(int i=0;i<maxSize;++i){
+        Palavra atual = palavrasOrdenadas[i];
+        printf("%d - %s\n",i,atual.palavra);
+        *((int*)&atual.palavra[92]) = posicao;
+        int qtd = atual.posicoes.size();
+        *((int*)&atual.palavra[96]) = qtd;
+        posicao += qtd;
+        for(int i=0;i<100;++i){
+            fputc(atual.palavra[i],palavrasDat);
+        }
+    }
+    //Escreve as posicoes das manpages que contem as palavras
+    char pos[4]; //converter o int para binário
+    for(int i=0;i<maxSize;++i){
+        Palavra atual = palavrasOrdenadas[i];
+        while(!atual.posicoes.empty()){
+            *((int*)&pos[0]) = atual.posicoes.front();
+            atual.posicoes.pop_front();
+            for(int i=0;i<4;++i){
+                fputc(pos[i],palavrasDat);
+            }
+        }
+    }
+    
+    fclose(palavrasDat);
+    
+    printf("Terminou de gerar palavras.dat\n");
+    
+    ///////////////////////////////////
+    ///// TERMINOU A PALAVRAS.DAT
     ///////////////////////////////////
 }
 
@@ -205,6 +293,10 @@ void buscaConteudoPorComando(){
         char comandoAtual[100];
         //lê o registro do arquivo
         fgets(comandoAtual,100,indicesDat);
+        /*
+         for 100
+         fgetc
+         */
         //compara com o procurado, a comparação para no caracter nulo '\0'
         //sem se importar com os bytes finais que são a posição
         int cmp = strcmp(comandoBusca,comandoAtual);
@@ -251,4 +343,126 @@ void buscaConteudoPorComando(){
     }else{
         printf("\nManPage nao encontrada!\n");
     }
+}
+
+void buscaPorUmaPalavra(){
+    char palavra[100];
+    scanf("%s",palavra);
+    
+    deque<int> indices = posicaoDasManPagesCom(palavra);
+
+    FILE* manpagesDat;
+    manpagesDat = fopen("..\\manpages.dat","rb");
+    
+    printf("\n\n");
+    
+    while(!indices.empty()){
+        fseek(manpagesDat,indices.front()*(comandoTamMax+conteudoTamMax),SEEK_SET);
+        char comando[100];
+        fgets(comando,100,manpagesDat);
+        printf("%d - %s\n",indices.front(),comando);
+        indices.pop_front();
+    }
+    
+    fclose(manpagesDat);
+    
+}
+
+void buscaPorDuasPalavras(){
+    char palavra1[100];
+    scanf("%s",palavra1);
+    
+    deque<int> indices1 = posicaoDasManPagesCom(palavra1);
+    
+    char palavra2[100];
+    scanf("%s",palavra2);
+    
+    deque<int> indices2 = posicaoDasManPagesCom(palavra2);
+    
+    //Intersecção de indices1 e indices2
+    deque<int> indices;
+    while(!indices2.empty()){
+        int atual = indices2.front();
+        
+        bool achou = false;
+        for(int i=0;i<indices1.size() && !achou;++i){
+            if(indices1.at(i) == atual){
+                achou = true;
+            }
+        }
+        
+        if(achou){
+            indices.push_back(atual);
+        }
+        indices2.pop_front();
+    }
+    
+    FILE* manpagesDat;
+    manpagesDat = fopen("..\\manpages.dat","rb");
+    
+    printf("\n\n");
+    
+    while(!indices.empty()){
+        fseek(manpagesDat,indices.front()*(comandoTamMax+conteudoTamMax),SEEK_SET);
+        char comando[100];
+        fgets(comando,100,manpagesDat);
+        printf("%d - %s\n",indices.front(),comando);
+        indices.pop_front();
+    }
+    
+    fclose(manpagesDat);
+}
+
+deque<int> posicaoDasManPagesCom(char* palavra){
+    FILE* palavrasDat;
+    palavrasDat = fopen("..\\palavras.dat","rb");
+   
+    //Lê a qtd de palavras dos primeiros 4 bytes e guarda em "tamanho";
+    char tamanhoC[4];
+    for(int i=0;i<4;++i){
+        tamanhoC[i] = fgetc(palavrasDat);
+    }
+    int tamanho = *((int*)&tamanhoC[0]);
+    
+    int pos = 0;
+    bool achou = false;
+    char palavraAtual[100];
+    while(!achou && pos<tamanho){
+        //posiciona o leitor no inicio do registro da palavra
+        fseek(palavrasDat,4+(pos*palavraTamMax),SEEK_SET);
+        //pega a palavra do registro
+        fgets(palavraAtual,100,palavrasDat);
+        //compara
+        int cmp = strcmp(palavra,palavraAtual);
+        if(cmp < 0){//buscado maior que encontrado, pega o ramo da esquerda
+            pos++;
+            pos = (2*pos)-1;
+        }else if(cmp > 0){//buscado menor que encontrado, pega o ramo da direita
+            pos++;
+            pos = (2*pos);
+        }else{//encontrou!!!
+            achou = true;
+        }
+    }
+    
+    deque<int> indices;
+    if(achou){
+        pos = *((int*)&palavraAtual[92]);
+        int qtd = *((int*)&palavraAtual[96]);
+        fseek(palavrasDat,4+(tamanho*palavraTamMax)+pos*4,SEEK_SET);
+        for(int i=0;i<qtd;++i){
+            char indiceC[4];
+            for(int a=0;a<4;++a){
+                indiceC[a] = fgetc(palavrasDat);
+            }
+            int indice = *((int*)&indiceC[0]);
+            indices.push_back(indice);
+        }
+    }else{
+        printf("Nenhum arquivo encontrado com a palavra '%s'",palavra);
+    }
+    
+    fclose(palavrasDat);
+    
+    return indices;
 }
